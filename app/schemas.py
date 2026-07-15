@@ -3,6 +3,7 @@ from pydantic import BaseModel
 class UserBase(BaseModel):
     full_name: str
     username: str
+    email: str
     bio: str | None = None
     is_private: bool = False
 

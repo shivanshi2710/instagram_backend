@@ -4,7 +4,8 @@ from .schemas import UserCreate, UserResponse, UserUpdate, PostCreate, PostRespo
 
 from .database import get_db
 from .models import User, Post
-from .auth import hash_password, verify_password
+from .auth import hash_password, verify_password, create_access_token, get_current_user
+from .email_service import send_signup_email
 router = APIRouter()
 
 
@@ -13,17 +14,24 @@ def create_user(user: UserCreate, db: Session = Depends(get_db)):
     new_user = User(
         full_name=user.full_name,
         username=user.username,
+        email=user.email,
         password_hash=hash_password(user.password)
     )
 
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
+
+    send_signup_email(
+        new_user.email,
+        new_user.full_name
+    )
+
     return "user created successfully"
 
 
 @router.get("/all_users", response_model=list[UserResponse])
-def get_all_users(db: Session = Depends(get_db)):
+def get_all_users(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     users = db.query(User).all()
     return users
 
@@ -103,9 +111,11 @@ def delete_user(user_id: int, db: Session = Depends(get_db)):
 @router.post("/posts", response_model=PostResponse)
 def create_post(
     post: PostCreate,
-    db: Session = Depends(get_db)
-):
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
 
+):
+    print(current_user)
     # Check if the user exists
     user = db.query(User).filter(User.id == post.user_id).first()
 
@@ -131,7 +141,7 @@ def create_post(
 
 
 @router.get("/posts", response_model=list[PostResponse])
-def get_all_posts(db: Session = Depends(get_db)):
+def get_all_posts(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     posts = db.query(Post).all()
     return posts
 
@@ -209,15 +219,22 @@ def login_id(login_info: login_data, db: Session = Depends(get_db)):
             detail="user not found"
         )
 
-    if not verify_password(
-        login_info.password, user.password_hash
-    ):
+    if not verify_password(login_info.password, user.password_hash):
 
         raise HTTPException(
             status_code=401,
             detail="invalid password"
         )
 
+    access_token = create_access_token(
+        {
+            "sub": str(user.id),
+            "username": str(user.username)
+        }
+    )
+
     return {
-        "message": "Login Successful"
+        "message": "login successful",
+        "access_token": access_token,
+        "token_type": "bearer"
     }

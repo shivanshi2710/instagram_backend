@@ -1,0 +1,5 @@
+SECRET_KEY = "this_is_my_super_secret_key_271005"
+
+ALGORITHM = "HS256"
+
+ACCESS_TOKEN_EXPIRE_MINUTES = 1
