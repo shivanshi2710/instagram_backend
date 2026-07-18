@@ -3,7 +3,7 @@ from pydantic import BaseModel
 class UserBase(BaseModel):
     full_name: str
     username: str
-    email: str
+    email: str | None = None
     bio: str | None = None
     is_private: bool = False
 
@@ -26,28 +26,3 @@ class UserUpdate(BaseModel):
     followers_count: int | None = None
     following_count: int | None = None
  
-
-class PostCreate(BaseModel):
-    content: str
-    caption: str
-    image_url: str | None = None
-    user_id: int
-
-
-class PostResponse(PostCreate):
-    id: int
-
-    model_config = {
-        "from_attributes": True
-    }
-
-
-class PostUpdate(BaseModel):
-    caption: str | None = None
-    content: str | None = None
-    image_url: str | None = None
-
-
-class login_data(BaseModel):
-    username: str
-    password: str
