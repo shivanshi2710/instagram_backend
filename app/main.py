@@ -6,7 +6,7 @@ from .database import Base, engine
 from app import model
 
 # Import routers
-from .routes import user, posts, login
+from .routes import user, posts, login, follow
 
 app = FastAPI(
     title="Instagram Backend API"
@@ -17,3 +17,4 @@ Base.metadata.create_all(bind=engine)
 app.include_router(user.router)
 app.include_router(posts.router)
 app.include_router(login.router)
+app.include_router(follow.router)

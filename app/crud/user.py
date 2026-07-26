@@ -34,7 +34,7 @@ def create_user(
         raise e
 
 
-def get_all(db: Session, current_user: User):
+def get_all(db: Session):
     try:
         user = db.query(User).all()
         return user
@@ -44,9 +44,8 @@ def get_all(db: Session, current_user: User):
 
 
 def get_user_by_id(
-    user_id: int,
     db: Session,
-    current_user: User
+    user_id: int
 ): 
     user = db.query(User).filter(
         User.id == user_id
@@ -57,8 +56,7 @@ def get_user_by_id(
 
 def get_user_by_username(
     username: str,
-    db: Session,
-    current_user: User
+    db: Session
 ):
     user = db.query(User).filter(
         User.username == username
@@ -67,7 +65,7 @@ def get_user_by_username(
 
         
 
-def get_user_by_email(email: str, db: Session, current_user: User):
+def get_user_by_email(db: Session,email: str):
     
     user = db.query(User).filter(User.email == email).first()
     return user
@@ -78,7 +76,6 @@ def update_user(
     user_id: int,
     user_update: UserUpdate,
     db: Session,
-    current_user: User
 ):
     
     user = db.query(User).filter(

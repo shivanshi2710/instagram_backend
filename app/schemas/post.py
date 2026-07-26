@@ -1,9 +1,9 @@
+from fastapi import UploadFile, File
 from pydantic import BaseModel
 class PostCreate(BaseModel):
     content: str
     caption: str
-    image_url: str | None = None
-    user_id: int
+    
 
 
 class PostResponse(PostCreate):

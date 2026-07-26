@@ -42,7 +42,7 @@ def create_user(
         print("error occurred while creating user",e)
         raise e
 
-@router.get("/", response_model=list[UserResponse])
+@router.get("/all_users", response_model=list[UserResponse])
 def get_all_users(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
@@ -80,8 +80,8 @@ def get_user_by_username(
 ):
     try:
         db_user =  user_crud.get_user_by_username(
-            db,
-            username
+            username,
+            db
         )
         if db_user is None:
             raise HTTPException(status_code=404, detail="user not found")
@@ -120,3 +120,6 @@ def delete_user(
         return db_user
     except Exception as e:
         raise e
+    
+
+    
