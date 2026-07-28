@@ -13,6 +13,7 @@ from app.model.user import User
 from ..auth.dependencies import get_current_user
 
 from ..crud import posts as post_crud 
+from ..utils.azure import upload_to_azure
 
 router = APIRouter(
     prefix="/posts",
@@ -29,16 +30,15 @@ def create_post(
     current_user: User = Depends(get_current_user)
 ):
     try:
-        print(content)
-        print(caption)
-        print(image.filename)
-
-        # new_post = post_crud.create_post(
-        #     db,
-        #     post,
-        #     current_user.id
-        # )
-        # return new_post
+        image_url = upload_to_azure(image)
+        new_post = post_crud.create_post(
+            db,
+            content,
+            caption,
+            image_url,
+            current_user.id
+        )
+        return new_post
         return 
     except Exception as e:
         raise e

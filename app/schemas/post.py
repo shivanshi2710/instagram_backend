@@ -8,6 +8,7 @@ class PostCreate(BaseModel):
 
 class PostResponse(PostCreate):
     id: int
+    image_url:str
 
     model_config = {
         "from_attributes": True

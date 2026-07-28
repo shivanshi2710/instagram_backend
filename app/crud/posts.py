@@ -12,28 +12,30 @@ from ..schemas.post import (
 
 
 def create_post(
-    post: PostCreate,
     db: Session,
-    current_user: User
+    content: str,
+    caption: str,
+    image_url:str,
+    user_id: int
 ):
 
     # Check if user exists
     user = db.query(User).filter(
-        User.id == post.user_id
+        User.id ==user_id
     ).first()
+    if user is not None:
+        db_post = Post(
+            content=content,
+            caption=caption,
+            image_url=image_url,
+            user_id=user_id
+        )
 
-    db_post = Post(
-        content=post.content,
-        caption=post.caption,
-        image_url=post.image_url,
-        user_id=post.user_id
-    )
+        db.add(db_post)
+        db.commit()
+        db.refresh(db_post)
 
-    db.add(db_post)
-    db.commit()
-    db.refresh(db_post)
-
-    return db_post
+        return db_post
     
 
 def get_all_posts(
