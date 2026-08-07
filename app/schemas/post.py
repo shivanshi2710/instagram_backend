@@ -19,3 +19,6 @@ class PostUpdate(BaseModel):
     caption: str | None = None
     content: str | None = None
     image_url: str | None = None
+
+
+

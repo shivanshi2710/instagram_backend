@@ -40,3 +40,15 @@ def upload_to_azure(file: UploadFile) -> str:
 
     # Return URL
     return blob_client.url
+
+
+
+def delete_from_azure(image_url: str):
+    blob_name = image_url.split("/")[-1]
+
+    blob_client = blob_service_client.get_blob_client(
+        container=CONTAINER_NAME,
+        blob=blob_name
+    )
+
+    blob_client.delete_blob()

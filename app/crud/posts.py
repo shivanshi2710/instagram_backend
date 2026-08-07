@@ -61,23 +61,21 @@ def get_post(
 
 
 def update_post(
-    post_update: PostUpdate,
     db: Session,
-    post
+    post: Post,
+    caption: str | None,
+    content: str | None,
+    image_url: str | None
 ):
-    
-    # post = db.query(Post).filter(
-    #     Post.id == post_id
-    # ).first()
 
-    if post_update.caption is not None:
-        post.caption = post_update.caption
+    if caption is not None:
+        post.caption = caption
 
-    if post_update.content is not None:
-        post.content = post_update.content
+    if content is not None:
+        post.content = content
 
-    if post_update.image_url is not None:
-        post.image_url = post_update.image_url
+    if image_url is not None:
+        post.image_url = image_url
 
     db.commit()
     db.refresh(post)
