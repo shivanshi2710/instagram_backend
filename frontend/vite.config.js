@@ -6,10 +6,10 @@ export default defineConfig({
   plugins: [react(), tailwindcss()],
   server: {
     proxy: {
-      '/login': 'http://localhost:8000',
-      '/users': 'http://localhost:8000',
-      '/posts': 'http://localhost:8000',
-      '/follow': 'http://localhost:8000',
+      '/login': 'http://backend:8000',
+      '/users': 'http://backend:8000',
+      '/posts': 'http://backend:8000',
+      '/follow': 'http://backend:8000',
     },
   },
 })
