@@ -16,6 +16,13 @@ from ..auth.dependencies import get_current_user
 
 from ..crud import posts as post_crud
 from ..utils.azure import upload_to_azure, delete_from_azure
+from ..cache import (
+    POSTS_TTL,
+    cache,
+    dump_post,
+    invalidate_posts,
+    posts_key,
+)
 
 router = APIRouter(
     prefix="/posts",
@@ -40,8 +47,8 @@ def create_post(
             image_url,
             current_user.id
         )
+        invalidate_posts(current_user.id)
         return new_post
-        return
     except Exception as e:
         raise e
 
@@ -52,8 +59,15 @@ def get_all_posts(
     current_user: User = Depends(get_current_user)
 ):
     try:
+        key = posts_key(current_user.id)
+        cached = cache.get_json(key)
+        if cached is not None:
+            return cached
+
         posts = post_crud.get_all_posts(db, current_user.id)
-        return posts
+        data = [dump_post(post) for post in posts]
+        cache.set_json(key, data, POSTS_TTL)
+        return data
     except Exception as e:
         raise e
 
@@ -99,13 +113,15 @@ def update_post(
 
         image_url = upload_to_azure(image)
 
-    return post_crud.update_post(
+    updated = post_crud.update_post(
         db=db,
         post=post,
         caption=caption,
         content=content,
         image_url=image_url
     )
+    invalidate_posts(current_user.id)
+    return updated
 
 
 @router.delete("/{post_id}")
@@ -115,10 +131,15 @@ def delete_post(
     current_user: User = Depends(get_current_user)
 ):
 
-    return post_crud.delete_post(
+    post = post_crud.get_post(post_id, db)
+    deleted = post_crud.delete_post(
         db,
-        post_id
+        post_id,
+        current_user
     )
+    if post is not None:
+        invalidate_posts(post.user_id)
+    return deleted
 
 
 @router.post("/posts/{post_id}/like")

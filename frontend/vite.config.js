@@ -5,11 +5,14 @@ import tailwindcss from '@tailwindcss/vite'
 export default defineConfig({
   plugins: [react(), tailwindcss()],
   server: {
+    allowedHosts: [
+      'instafrontend-ave8hhfgafemfuek.centralindia-01.azurewebsites.net',
+    ],
     proxy: {
-      '/login': 'http://backend:8000',
-      '/users': 'http://backend:8000',
-      '/posts': 'http://backend:8000',
-      '/follow': 'http://backend:8000',
+      '/login': 'https://instabackend-c5e2ejdkepdwddaa.centralindia-01.azurewebsites.net',
+      '/users': 'https://instabackend-c5e2ejdkepdwddaa.centralindia-01.azurewebsites.net',
+      '/posts': 'https://instabackend-c5e2ejdkepdwddaa.centralindia-01.azurewebsites.net',
+      '/follow': 'https://instabackend-c5e2ejdkepdwddaa.centralindia-01.azurewebsites.net',
     },
   },
 })
