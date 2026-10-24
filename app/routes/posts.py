@@ -41,7 +41,7 @@ def create_post(
             image_url,
             current_user.id
         )
-        cache.posts_cache[current_user.id] = None
+        cache.invalidate_posts_cache(current_user.id)
         return new_post
     except Exception as e:
         raise e
@@ -52,17 +52,22 @@ def get_all_posts(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    try:
-        cached = cache.posts_cache.get(current_user.id)
-        if cached is not None:
-            return cached
+    # 1. Try Redis first
+    cached = cache.get_cached_posts(current_user.id)
 
-        posts = post_crud.get_all_posts(db, current_user.id)
-        data = [cache.dump_post(post) for post in posts]
-        cache.posts_cache[current_user.id] = data
-        return data
-    except Exception as e:
-        raise e
+    if cached is not None:
+        return cached
+
+    # 2. If not cached, fetch from PostgreSQL
+    posts = post_crud.get_all_posts(db, current_user.id)
+
+    # 3. Convert SQLAlchemy objects to dictionaries
+    data = [cache.dump_post(post) for post in posts]
+
+    # 4. Save the result in Redis for 60 seconds
+    cache.set_cached_posts(current_user.id, data)
+
+    return data
 
 
 @router.get("/get_post_by_post_id/{post_id}", response_model=PostResponse)
@@ -113,7 +118,7 @@ def update_post(
         content=content,
         image_url=image_url
     )
-    cache.posts_cache[current_user.id] = None
+    cache.invalidate_posts_cache(current_user.id)
     return updated
 
 
@@ -131,7 +136,7 @@ def delete_post(
         current_user
     )
     if post is not None:
-        cache.posts_cache[post.user_id] = None
+        cache.invalidate_posts_cache(post.user_id)
     return deleted
 
 

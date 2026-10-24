@@ -1,5 +1,4 @@
 services:
-
   backend:
     build: ./app
     ports:
@@ -8,9 +7,12 @@ services:
       - ./app/.env
     environment:
       DATABASE_URL: postgresql+psycopg2://shivanshi:shivanshi@db:5432/instagram
+      REDIS_URL: redis://redis:6379/0
     depends_on:
       db:
         condition: service_healthy
+      redis:
+        condition: service_started
 
   frontend:
     build: ./frontend
@@ -35,5 +37,16 @@ services:
       timeout: 5s
       retries: 10
 
+  redis:
+    image: redis:7-alpine
+    container_name: instagram-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    restart: unless-stopped
+
 volumes:
   postgres_data:
+  redis_data:
