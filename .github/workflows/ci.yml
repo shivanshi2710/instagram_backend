@@ -1,23 +1,92 @@
-name: Instagram Backend CI
+
+name: Instagram Backend CI-CD Pipeline
 
 on:
   push:
     branches:
       - master
+
   pull_request:
     branches:
       - master
 
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: instagram-backend-pipeline
+  cancel-in-progress: false
+
 jobs:
-  build:
+
+  # JOB 1: Continuous Integration
+  ci:
+    name: CI - Build and Validate
     runs-on: ubuntu-latest
 
     steps:
-      - name: Get the code
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up Docker
+      - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
       - name: Build backend image
         run: docker compose build backend
+
+
+  # JOB 2: Build Docker image and push to ACR
+  build-and-push:
+    name: Build and Push to ACR
+    needs: ci
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build backend Docker image
+        run: |
+          docker build \
+            -f app/Dockerfile \
+            -t "${{ secrets.ACR_LOGIN_SERVER }}/backend:${{ github.sha }}" \
+            ./app
+
+      - name: Login to Azure Container Registry
+        uses: azure/docker-login@v1
+        with:
+          login-server: ${{ secrets.ACR_LOGIN_SERVER }}
+          username: ${{ secrets.ACR_USERNAME }}
+          password: ${{ secrets.ACR_PASSWORD }}
+
+      - name: Push image to ACR
+        run: |
+          docker push "${{ secrets.ACR_LOGIN_SERVER }}/backend:${{ github.sha }}"
+
+
+  # JOB 3: Continuous Deployment
+  deploy:
+    name: CD - Deploy to Azure
+    needs: build-and-push
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Login to Azure using OIDC
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Deploy to Azure App Service
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: instabackend
+          images: "${{ secrets.ACR_LOGIN_SERVER }}/backend:${{ github.sha }}"
